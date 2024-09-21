@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "type": "select-sex",
+    "question": "What is your gender assigned at birth?",
+    "additionalOptions": {
+      "hideNextButton": true
+    },
+    "conditionalBlocks": {
+      "female": [
+        {
+          "id": 2,
+          "question": "Are you currently pregnant?",
+          "type": "single-variant"
+        },
+        {
+          "id": 3,
+          "question": "When was the last time you were on your period?",
+          "type": "single-variant",
+          "options": [
+            "Few days ago",
+            "1 week ago",
+            "More than a week ago"
+          ],
+          "conditionalBlocks": {
+            "1 week ago": [
+              {
+                "id": 9,
+                "question": "How many days ago?",
+                "type": "custom-input"
+              }
+            ]
+          }
+        },
+        {
+          "id": 4,
+          "question": "Another question for female?",
+          "type": "single-variant",
+          "options": [
+            "Yes!",
+            "No!"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "question": "Do you have any known allergies?",
+    "type": "custom-input"
+  },
+  {
+    "id": 6,
+    "question": "Do you have a vehicle?",
+    "type": "single-variant",
+    "conditionalBlocks": {
+      "true": [
+        {
+          "id": 7,
+          "question": "What type of vehicle do you have?",
+          "type": "select-vehicle-type",
+          "additionalOptions": {
+            "hideNextButton": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": 8,
+    "question": "What is your primary reason for wanting to make a change?",
+    "type": "single-variant",
+    "options": [
+      "I want to live longer",
+      "I want to look better",
+      "I want to reduce health issues",
+      "I want to improve my mental health"
+    ]
+  }
+]
