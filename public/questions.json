@@ -25,7 +25,7 @@
           "conditionalBlocks": {
             "1 week ago": [
               {
-                "id": 9,
+                "id": 4,
                 "question": "How many days ago?",
                 "type": "custom-input"
               }
@@ -33,7 +33,7 @@
           }
         },
         {
-          "id": 4,
+          "id": 5,
           "question": "Another question for female?",
           "type": "single-variant",
           "options": [
@@ -45,18 +45,18 @@
     }
   },
   {
-    "id": 5,
+    "id": 6,
     "question": "Do you have any known allergies?",
     "type": "custom-input"
   },
   {
-    "id": 6,
+    "id": 7,
     "question": "Do you have a vehicle?",
     "type": "single-variant",
     "conditionalBlocks": {
       "true": [
         {
-          "id": 7,
+          "id": 8,
           "question": "What type of vehicle do you have?",
           "type": "select-vehicle-type",
           "additionalOptions": {
@@ -67,7 +67,7 @@
     }
   },
   {
-    "id": 8,
+    "id": 9,
     "question": "What is your primary reason for wanting to make a change?",
     "type": "single-variant",
     "options": [
