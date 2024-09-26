@@ -13,7 +13,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.header {
+header {
   height: 200px;
   background: #ffd2f3;
   position: absolute;
@@ -37,7 +37,6 @@
 .progress-bar .progress {
   height: 20px;
   border-radius: 5px;
-  width: 5%;
   background: #ceb9ff;
-  transition: all 0.5s;
+  transition: width 0.5s;
 }
