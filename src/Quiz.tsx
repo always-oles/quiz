@@ -75,7 +75,7 @@ const App: React.FC = () => {
     calculateCount(steps, nesting);
   }, [Object.keys(nesting).length]);
 
-  const findElementById = (elements, id) => {
+  const findElementById = (elements: QuestionBlock[], id: string): QuestionBlock | null => {
     // Base case: Loop through the main array of elements
     for (const element of elements) {
       // Check if the current element has the matching id
@@ -144,7 +144,7 @@ const App: React.FC = () => {
    *
    * @param data The questions data.
    */
-  const loadAllData = (data: []) => {
+  const loadAllData = (data: QuestionBlock[]) => {
     const parsedNesting = JSON.parse(localStorage.getItem('nesting') || '{}');
     if (Object.keys(parsedNesting).length > 0) {
       setNesting(parsedNesting);
@@ -180,7 +180,7 @@ const App: React.FC = () => {
     const parsedCurrentStep = JSON.parse(localStorage.getItem('currentStep') || 'null');
     if (parsedCurrentStep) {
       setCurrentStep(parsedCurrentStep);
-    } else {
+    } else if (data && data.length > 0) {
       setCurrentStep(data[0]);
     }
 
@@ -197,17 +197,19 @@ const App: React.FC = () => {
         return;
       }
 
-      switch (currentStep.type) {
-        case 'single-variant':
-          setIsNextDisabled(false);
-          break;
-        case 'custom-input':
-          if (value[name].length === 0) {
-            setIsNextDisabled(true);
-          } else {
+      if (currentStep) {
+        switch (currentStep.type) {
+          case 'single-variant':
             setIsNextDisabled(false);
-          }
-          break;
+            break;
+          case 'custom-input':
+            if (name && name in value && value[name].length === 0) {
+              setIsNextDisabled(true);
+            } else {
+              setIsNextDisabled(false);
+            }
+            break;
+        }
       }
     });
     return () => subscription.unsubscribe();
