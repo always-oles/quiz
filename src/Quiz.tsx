@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { FaMale } from 'react-icons/fa';
 import { FaFemale } from 'react-icons/fa';
 import { FaCar } from 'react-icons/fa';
@@ -257,7 +257,7 @@ const App: React.FC = () => {
     setQuestionsCount(normalCount + additionalCount);
   };
 
-  const calculateCurrent = (currentNumber: number, forward: boolean) => {
+  const calculateCurrent = (currentNumber: number) => {
     let normalCount = currentNumber + 1;
 
     // if we are in the middle of a nesting, calculate the count based on nesting
@@ -343,7 +343,7 @@ const App: React.FC = () => {
     }
 
     setIsNextDisabled(true);
-    calculateCurrent(currentStepNumber, true);
+    calculateCurrent(currentStepNumber);
 
     // save history
     setHistory((prevSteps) => [...prevSteps, currentStep]);
@@ -435,7 +435,7 @@ const App: React.FC = () => {
       let lastEntry;
 
       // get last element of nesting
-      for (const [key, value] of Object.entries(nesting)) {
+      for (const [key] of Object.entries(nesting)) {
         lastEntry = nesting[key];
       }
 
@@ -445,7 +445,7 @@ const App: React.FC = () => {
           let newLastEntry;
 
           // if we're going from nesting up to another nesting
-          for (const [key, value] of Object.entries(nesting)) {
+          for (const [key] of Object.entries(nesting)) {
             newLastEntry = nesting[key];
           }
 
@@ -478,7 +478,7 @@ const App: React.FC = () => {
     setValue(previousStep.question, formData[previousStep.question]);
     setCurrentStep(previousStep);
     setHistory(history.slice(0, -1));
-    calculateCurrent(currentNumber - 1, false);
+    calculateCurrent(currentNumber - 1);
   };
 
   return (
