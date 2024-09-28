@@ -275,7 +275,6 @@ const App: React.FC = () => {
 
   const calculateCurrent = (currentNumber: number, localNesting: Nesting) => {
     let normalCount = currentNumber + 1;
-    console.log('Normal Count =====', normalCount);
 
     if (!localNesting) {
       localNesting = nesting;
@@ -291,7 +290,6 @@ const App: React.FC = () => {
         additionalCount += localNesting[i].position;
       }
     }
-    console.log('Additional count from nesting', nesting, additionalCount);
     setCurrentQuestionNumber(normalCount + additionalCount);
   };
 
@@ -447,7 +445,6 @@ const App: React.FC = () => {
     // if we're going back to question that has conditional blocks - remove it's nesting at all
     for (const i in nesting) {
       if (previousStep && +nesting[i].id === +previousStep.id) {
-        console.log('deleting, NO DECREMENT', nesting[i]);
         delete nesting[i];
 
         // we're going up in tree from nesting to general question
@@ -455,7 +452,6 @@ const App: React.FC = () => {
         break;
       }
     }
-    console.log('previous in nesting', previousInNesting);
 
     // If nesting is present
     if (previousInNesting && Object.keys(nesting).length > 0) {
@@ -469,7 +465,6 @@ const App: React.FC = () => {
 
       if (lastEntry && lastEntry.active === true) {
         if (lastEntry.position === 0) {
-          console.log('Deleting nesting', lastEntry);
           delete nesting[lastEntry.id];
           let newLastEntry;
 
@@ -478,7 +473,6 @@ const App: React.FC = () => {
             newLastEntry = nesting[key];
           }
 
-          console.log('switching to newLastEntry', newLastEntry);
           if (newLastEntry) {
             if (newLastEntry.active === false) {
               newLastEntry.active = true;
@@ -489,11 +483,9 @@ const App: React.FC = () => {
             nesting[newLastEntry.id] = newLastEntry;
           }
         } else {
-          console.log('DECREMENT POSITION');
           nesting[lastEntry.id].position -= 1;
 
           if (noDecrement === true) {
-            console.log('INCREASING STEP');
             currentNumber += 1;
             setCurrentStepNumber(currentNumber);
           }
@@ -503,14 +495,12 @@ const App: React.FC = () => {
       } else if (lastEntry && lastEntry.active === false) {
         nesting[lastEntry.id].active = true;
         setNesting(nesting);
-        console.log('MINUS, new nesting:', nesting);
         currentNumber -= 1;
         setCurrentStepNumber(currentNumber);
       }
     } else if (noDecrement === false) {
       currentNumber -= 1;
       setCurrentStepNumber(currentNumber);
-      console.log('CURRENT NUMBER DECREMENT', currentNumber);
     }
 
     // setting form value to previous step stored data
@@ -519,7 +509,6 @@ const App: React.FC = () => {
     }
     setCurrentStep(previousStep);
     setHistory(history.slice(0, -1));
-    // calculateCurrent(currentNumber - 1, nesting);
   };
 
   return (
