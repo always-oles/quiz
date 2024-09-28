@@ -59,6 +59,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if (questionsCount === currentQuestionNumber) {
       setIsLastQuestion(true);
+    } else {
+      setIsLastQuestion(false);
     }
   }, [questionsCount, currentQuestionNumber]);
 
@@ -82,6 +84,10 @@ const App: React.FC = () => {
   useEffect(() => {
     calculateCount(steps, nesting);
   }, [Object.keys(nesting).length]);
+
+  useEffect(() => {
+    calculateCurrent(currentStepNumber, nesting);
+  }, [JSON.stringify(nesting), currentStepNumber]);
 
   const findElementById = (elements: QuestionBlock[], id: string): QuestionBlock | null => {
     // Base case: Loop through the main array of elements
@@ -142,6 +148,7 @@ const App: React.FC = () => {
     setIsFinished(false);
     setIsLastQuestion(false);
     calculateCount(steps, {});
+    calculateCurrent(0, {});
     setCurrentStep(steps[0]);
     setStepStartTime(new Date());
     setFormTime({});
@@ -170,9 +177,10 @@ const App: React.FC = () => {
     }
 
     const parsedCurrentStepNumber = JSON.parse(localStorage.getItem('currentStepNumber') || 'null');
-    if (parsedCurrentStepNumber) {
+    if (parsedCurrentStepNumber !== null) {
       setCurrentStepNumber(parsedCurrentStepNumber);
     }
+    calculateCurrent(parsedCurrentStepNumber, parsedNesting);
 
     const parsedHistory = JSON.parse(localStorage.getItem('history') || 'null');
     if (parsedHistory) {
@@ -188,8 +196,10 @@ const App: React.FC = () => {
     const parsedCurrentStep = JSON.parse(localStorage.getItem('currentStep') || 'null');
     if (parsedCurrentStep) {
       setCurrentStep(parsedCurrentStep);
-    } else if (data && data.length > 0) {
-      setCurrentStep(data[0]);
+    } else {
+      if (data && data.length > 0) {
+        setCurrentStep(data[0]);
+      }
     }
 
     const parsedIsFinished = JSON.parse(localStorage.getItem('isFinished') || 'null');
@@ -230,7 +240,13 @@ const App: React.FC = () => {
    * @returns The last active nesting object, or null if none is found.
    */
   const findLastActive = (data: Nesting): Nesting | undefined => {
-    const lastActive = Object.values(data).find((item) => item.active === true);
+    let lastActive;
+    Object.values(data).forEach((item) => {
+      if (item.active === true) {
+        lastActive = item;
+      }
+    });
+
     return lastActive as Nesting | undefined;
   };
 
@@ -257,25 +273,29 @@ const App: React.FC = () => {
     setQuestionsCount(normalCount + additionalCount);
   };
 
-  const calculateCurrent = (currentNumber: number) => {
+  const calculateCurrent = (currentNumber: number, localNesting: Nesting) => {
     let normalCount = currentNumber + 1;
+    console.log('Normal Count =====', normalCount);
+
+    if (!localNesting) {
+      localNesting = nesting;
+    }
 
     // if we are in the middle of a nesting, calculate the count based on nesting
     let additionalCount = 0;
 
-    if (Object.keys(nesting).length > 0) {
-      for (const i in nesting) {
-        additionalCount++;
-        // console.log('nesting additional current', nesting[i]);
-        additionalCount += nesting[i].position;
+    if (Object.keys(localNesting).length > 0) {
+      additionalCount += Object.keys(localNesting).length;
+
+      for (const i in localNesting) {
+        additionalCount += localNesting[i].position;
       }
     }
-    // console.log('mode:forward', forward, 'normal count, additional count', normalCount, additionalCount);
-
-    setCurrentQuestionNumber(normalCount + additionalCount + 1);
+    console.log('Additional count from nesting', nesting, additionalCount);
+    setCurrentQuestionNumber(normalCount + additionalCount);
   };
 
-  const calculateTotalTime = (data?: {[key:string] : number}) => {
+  const calculateTotalTime = (data?: { [key: string]: number }) => {
     let total = 0;
     let from = data ? data : formTime;
 
@@ -308,7 +328,11 @@ const App: React.FC = () => {
     const answerValue = formData[parent.question];
 
     // if conditional questions number is more than we have nesting, we're done
-    if (parent && parent.conditionalBlocks && parent.conditionalBlocks[answerValue].length - 1 > nesting[parent.id].position) {
+    if (
+      parent &&
+      parent.conditionalBlocks &&
+      parent.conditionalBlocks[answerValue].length - 1 > nesting[parent.id].position
+    ) {
       let newNesting = nesting;
       newNesting[parent.id].position++;
       setNesting(newNesting);
@@ -329,9 +353,11 @@ const App: React.FC = () => {
     let savedFormData = { ...formData, ...getValues() };
     setFormData(savedFormData);
 
-    const timeSpent = { [currentStep!.question]: new Date().getTime() - stepStartTime.getTime() };
-    setFormTime({ ...formTime, ...timeSpent });
-    setStepStartTime(new Date());
+    if (currentStep) {
+      const timeSpent = { [currentStep.question]: new Date().getTime() - stepStartTime.getTime() };
+      setFormTime({ ...formTime, ...timeSpent });
+      setStepStartTime(new Date());
+    }
 
     // reset form, because we stored answers in formData
     reset();
@@ -343,14 +369,12 @@ const App: React.FC = () => {
     }
 
     setIsNextDisabled(true);
-    calculateCurrent(currentStepNumber);
+    // calculateCurrent(currentStepNumber, nesting);
 
     // save history
     setHistory((prevSteps) => [...prevSteps, currentStep]);
 
     if (hasActiveNesting(nesting)) {
-      console.log('nesting detected', nesting);
-
       if (currentStep?.conditionalBlocks) {
         const block = currentStep.conditionalBlocks[savedFormData[currentStep.question]];
 
@@ -400,19 +424,21 @@ const App: React.FC = () => {
     setStepStartTime(new Date());
 
     // take previous step from history
-    const previousStep: QuestionBlock = history.slice(-1)[0]!;
+    const previousStep: QuestionBlock | null = history.slice(-1)[0];
 
     // reset form as we're going back in history
     reset();
 
     // Clear answer for the current question
-    delete formData[currentStep!.question];
-    setFormData(formData);
+    if (currentStep) {
+      delete formData[currentStep.question];
+      setFormData(formData);
+    }
 
     // previous question is on 0-level or is nested in conditional block
     let previousInNesting = true;
     for (const i in steps) {
-      if (steps[i].id === previousStep.id) {
+      if (previousStep && +steps[i].id === +previousStep.id) {
         previousInNesting = false;
         break;
       }
@@ -420,7 +446,8 @@ const App: React.FC = () => {
 
     // if we're going back to question that has conditional blocks - remove it's nesting at all
     for (const i in nesting) {
-      if (nesting[i].id === String(previousStep.id)) {
+      if (previousStep && +nesting[i].id === +previousStep.id) {
+        console.log('deleting, NO DECREMENT', nesting[i]);
         delete nesting[i];
 
         // we're going up in tree from nesting to general question
@@ -428,10 +455,11 @@ const App: React.FC = () => {
         break;
       }
     }
+    console.log('previous in nesting', previousInNesting);
 
     // If nesting is present
     if (previousInNesting && Object.keys(nesting).length > 0) {
-      console.log('back nesting detected!!!!!!!', nesting, 'Object.values(nesting)', Object.values(nesting));
+      console.table(nesting);
       let lastEntry;
 
       // get last element of nesting
@@ -441,6 +469,7 @@ const App: React.FC = () => {
 
       if (lastEntry && lastEntry.active === true) {
         if (lastEntry.position === 0) {
+          console.log('Deleting nesting', lastEntry);
           delete nesting[lastEntry.id];
           let newLastEntry;
 
@@ -449,6 +478,7 @@ const App: React.FC = () => {
             newLastEntry = nesting[key];
           }
 
+          console.log('switching to newLastEntry', newLastEntry);
           if (newLastEntry) {
             if (newLastEntry.active === false) {
               newLastEntry.active = true;
@@ -459,26 +489,37 @@ const App: React.FC = () => {
             nesting[newLastEntry.id] = newLastEntry;
           }
         } else {
+          console.log('DECREMENT POSITION');
           nesting[lastEntry.id].position -= 1;
+
+          if (noDecrement === true) {
+            console.log('INCREASING STEP');
+            currentNumber += 1;
+            setCurrentStepNumber(currentNumber);
+          }
         }
 
         setNesting(nesting);
-      } else if (lastEntry) {
+      } else if (lastEntry && lastEntry.active === false) {
         nesting[lastEntry.id].active = true;
         setNesting(nesting);
+        console.log('MINUS, new nesting:', nesting);
         currentNumber -= 1;
         setCurrentStepNumber(currentNumber);
       }
     } else if (noDecrement === false) {
       currentNumber -= 1;
       setCurrentStepNumber(currentNumber);
+      console.log('CURRENT NUMBER DECREMENT', currentNumber);
     }
 
     // setting form value to previous step stored data
-    setValue(previousStep.question, formData[previousStep.question]);
+    if (previousStep) {
+      setValue(previousStep.question, formData[previousStep.question]);
+    }
     setCurrentStep(previousStep);
     setHistory(history.slice(0, -1));
-    calculateCurrent(currentNumber - 1);
+    // calculateCurrent(currentNumber - 1, nesting);
   };
 
   return (
@@ -510,7 +551,9 @@ const App: React.FC = () => {
                       <span className="font-semibold"> {(formTime[item] / 1000).toFixed(1)}s</span>
                     </div>
                   ))}
-                  <div className="mt-4 font-bold text-gray-800">Total time spent: {(Number(totalTime) / 1000).toFixed(1)}s</div>
+                  <div className="mt-4 font-bold text-gray-800">
+                    Total time spent: {(Number(totalTime) / 1000).toFixed(1)}s
+                  </div>
                 </div>
                 <button
                   className="w-full mt-6 bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition-colors disabled:bg-slate-400"
