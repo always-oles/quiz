@@ -10,10 +10,13 @@
     "plugin:jsx-a11y/recommended",
     "plugin:import/recommended",
     "airbnb",
+    "airbnb/hooks",
+    "airbnb-typescript",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
+    "project": "./tsconfig.json",
     "ecmaFeatures": {
       "jsx": true
     },
@@ -21,5 +24,5 @@
     "sourceType": "module"
   },
   "plugins": ["react", "@typescript-eslint"],
-  "rules": {}
+  "rules": {  }
 }
