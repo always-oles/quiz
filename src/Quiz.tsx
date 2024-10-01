@@ -462,10 +462,13 @@ const App: React.FC = () => {
           }
 
           if (newLastEntry) {
+            console.log('new last entry', newLastEntry);
             if (newLastEntry.active === false) {
               newLastEntry.active = true;
+              console.log('setting active!');
             } else {
               newLastEntry.position -= 1;
+              console.log('decrementing positiion!');
             }
 
             nesting[newLastEntry.id] = newLastEntry;
@@ -492,6 +495,7 @@ const App: React.FC = () => {
         }
 
         nesting[lastEntry.id].active = true;
+        console.log('setting ', lastEntry.id, 'active=true');
         setNesting(nesting);
       }
     } else if (noDecrement === false) {
