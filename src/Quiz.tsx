@@ -83,11 +83,6 @@ const App: React.FC = () => {
   }, [history, isFinished]);
 
   useEffect(() => {
-    console.log('CurrentStepNumber', currentStepNumber);
-  }, [currentStepNumber]);
-
-
-  useEffect(() => {
     calculateCount(steps, nesting);
   }, [JSON.stringify(nesting)]);
 
@@ -304,7 +299,6 @@ const App: React.FC = () => {
     }
 
     const answerValue = formData[parent.question];
-    console.log('handleNesting parent', parent, 'nesting[parent.id]', nesting[parent.id]);
 
     // if conditional questions number is more than we have nesting, we're done
     if (
@@ -312,13 +306,11 @@ const App: React.FC = () => {
       parent.conditionalBlocks &&
       parent.conditionalBlocks[answerValue].length - 1 > nesting[parent.id].position
     ) {
-      console.log('position++');
       nesting[parent.id].position++;
       setNesting(nesting);
       setCurrentStep(parent.conditionalBlocks[answerValue][nesting[parent.id].position]);
       setCurrentQuestionNumber(currentQuestionNumber + 1);
     } else {
-      console.log('active=false');
       nesting[parent.id].active = false;
       setNesting(nesting);
       if (hasActiveNesting(nesting)) {
@@ -428,7 +420,6 @@ const App: React.FC = () => {
     // if we're going back to question that has conditional blocks - remove it's nesting at all
     for (const i in nesting) {
       if (previousStep && +nesting[i].id === +previousStep.id) {
-        console.log('deleting nesting[i], no decrement', nesting[i]);
         delete nesting[i];
 
         // we're going up in tree from nesting to general question
@@ -439,8 +430,6 @@ const App: React.FC = () => {
 
     // If nesting is present
     if (previousInNesting && Object.keys(nesting).length > 0) {
-      console.log('previous in nesting');
-      console.table(nesting);
       let lastEntry;
 
       // get last element of nesting
@@ -449,10 +438,8 @@ const App: React.FC = () => {
       }
 
       if (lastEntry && lastEntry.active === true) {
-        console.log('lastEntry active', lastEntry);
         if (lastEntry.position === 0) {
           delete nesting[lastEntry.id];
-          console.log('DELETING NESTING', lastEntry.id);
           let newLastEntry;
 
           // if we're going from nesting up to another nesting
@@ -461,13 +448,10 @@ const App: React.FC = () => {
           }
 
           if (newLastEntry) {
-            console.log('new last entry', newLastEntry);
             if (newLastEntry.active === false) {
               newLastEntry.active = true;
-              console.log('setting active!');
             } else {
               newLastEntry.position -= 1;
-              console.log('decrementing positiion!');
             }
 
             nesting[newLastEntry.id] = newLastEntry;
@@ -475,30 +459,24 @@ const App: React.FC = () => {
         } else {
           if (noDecrement === false) {
             nesting[lastEntry.id].position -= 1;
-            console.log('decrement position -1');
           }
         }
 
         setNesting(nesting);
       } else if (lastEntry && lastEntry.active === false) {
-        console.log('lastEntry NOT active', lastEntry);
 
         const lastActiveNesting = findLastActive(nesting) as any;
         if (lastActiveNesting && lastActiveNesting.position) {
-          console.log('lastActiveNesting position -1', lastActiveNesting);
           lastActiveNesting.position -= 1;
         } else {
-          console.log('decrementing current step');
           currentNumber -= 1;
           setCurrentStepNumber(currentNumber);
         }
 
         nesting[lastEntry.id].active = true;
-        console.log('setting ', lastEntry.id, 'active=true');
         setNesting(nesting);
       }
     } else if (noDecrement === false) {
-      console.log('GOING BACK -1');
       currentNumber -= 1;
       setCurrentStepNumber(currentNumber);
     }
