@@ -118,7 +118,6 @@ const App: React.FC = () => {
    * Saves the state and data to localStorage
    */
   const saveAllData = () => {
-    return;
     localStorage.setItem('nesting', JSON.stringify(nesting));
     localStorage.setItem('formData', JSON.stringify(formData));
     localStorage.setItem('questionsCount', JSON.stringify(questionsCount));
