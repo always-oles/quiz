@@ -65,10 +65,6 @@ const App: React.FC = () => {
     }
   }, [questionsCount, currentQuestionNumber]);
 
-  useEffect(() => {
-    console.log('currentStepNumber', currentStepNumber);
-  }, [currentStepNumber]);
-
   // Load initial data (JSON), form data, and time from localStorage if available
   useEffect(() => {
     fetch('./questions.json')
@@ -87,12 +83,13 @@ const App: React.FC = () => {
   }, [history, isFinished]);
 
   useEffect(() => {
-    calculateCount(steps, nesting);
-  }, [JSON.stringify(nesting)]);
+    console.log('CurrentStepNumber', currentStepNumber);
+  }, [currentStepNumber]);
+
 
   useEffect(() => {
-    calculateCurrent(currentStepNumber, nesting);
-  }, [JSON.stringify(nesting), currentStepNumber]);
+    calculateCount(steps, nesting);
+  }, [JSON.stringify(nesting)]);
 
   const findElementById = (elements: QuestionBlock[], id: string): QuestionBlock | null => {
     // Base case: Loop through the main array of elements
@@ -154,7 +151,6 @@ const App: React.FC = () => {
     setIsFinished(false);
     setIsLastQuestion(false);
     calculateCount(steps, {});
-    calculateCurrent(0, {});
     setCurrentStep(steps[0]);
     setStepStartTime(new Date());
     setFormTime({});
@@ -186,7 +182,6 @@ const App: React.FC = () => {
     if (parsedCurrentStepNumber !== null) {
       setCurrentStepNumber(parsedCurrentStepNumber);
     }
-    calculateCurrent(parsedCurrentStepNumber, parsedNesting);
 
     const parsedHistory = JSON.parse(localStorage.getItem('history') || 'null');
     if (parsedHistory) {
@@ -245,15 +240,15 @@ const App: React.FC = () => {
    * @param data The nesting state.
    * @returns The last active nesting object, or null if none is found.
    */
-  const findLastActive = (data: Nesting): Nesting | undefined => {
-    let lastActive;
+  const findLastActive = (data: Nesting): Nesting | null => {
+    let lastActive = null;
     Object.values(data).forEach((item) => {
       if (item.active === true) {
         lastActive = item;
       }
     });
 
-    return lastActive as Nesting | undefined;
+    return lastActive as Nesting | null;
   };
 
   const hasActiveNesting = (data: Nesting) => {
@@ -277,28 +272,6 @@ const App: React.FC = () => {
     }
 
     setQuestionsCount(normalCount + additionalCount);
-  };
-
-  const calculateCurrent = (currentNumber: number, localNesting: Nesting) => {
-    let normalCount = currentNumber + 1;
-    // console.log('Normal count =====', normalCount);
-
-    if (!localNesting) {
-      localNesting = nesting;
-    }
-
-    // if we are in the middle of a nesting, calculate the count based on nesting
-    let additionalCount = 0;
-
-    if (Object.keys(localNesting).length > 0) {
-      additionalCount += Object.keys(localNesting).length;
-
-      for (const i in localNesting) {
-        additionalCount += localNesting[i].position;
-      }
-    }
-    // console.log('additional count === ', additionalCount);
-    setCurrentQuestionNumber(normalCount + additionalCount);
   };
 
   const calculateTotalTime = (data?: { [key: string]: number }) => {
@@ -344,6 +317,7 @@ const App: React.FC = () => {
       nesting[parent.id].position++;
       setNesting(nesting);
       setCurrentStep(parent.conditionalBlocks[answerValue][nesting[parent.id].position]);
+      setCurrentQuestionNumber(currentQuestionNumber + 1);
     } else {
       console.log('active=false');
       nesting[parent.id].active = false;
@@ -375,7 +349,6 @@ const App: React.FC = () => {
     }
 
     setIsNextDisabled(true);
-    // calculateCurrent(currentStepNumber, nesting);
 
     // save history
     setHistory((prevSteps) => [...prevSteps, currentStep]);
@@ -386,6 +359,7 @@ const App: React.FC = () => {
 
         if (block) {
           setCurrentStep(block[0]);
+          setCurrentQuestionNumber(currentQuestionNumber + 1);
           setNesting((data) => ({
             ...data,
             [currentStep.id]: { id: currentStep.id, position: 0, active: true },
@@ -403,6 +377,7 @@ const App: React.FC = () => {
 
       if (block) {
         setCurrentStep(block[0]);
+        setCurrentQuestionNumber(currentQuestionNumber + 1);
         setNesting((data) => ({
           ...data,
           [currentStep.id]: { id: currentStep.id, position: 0, active: true },
@@ -419,6 +394,7 @@ const App: React.FC = () => {
     const nextQuestionNumber = currentStepNumber + 1;
     setCurrentStepNumber(nextQuestionNumber);
     setCurrentStep(steps[nextQuestionNumber]);
+    setCurrentQuestionNumber(currentQuestionNumber + 1);
   };
 
   const goBack = (e: React.SyntheticEvent) => {
@@ -495,26 +471,22 @@ const App: React.FC = () => {
             nesting[newLastEntry.id] = newLastEntry;
           }
         } else {
-          nesting[lastEntry.id].position -= 1;
-          console.log('decrement position -1, noDecrement', noDecrement);
-
-          // if (noDecrement === true) {
-          //   currentNumber += 1;
-          //   setCurrentStepNumber(currentNumber);
-          // }
+          if (noDecrement === false) {
+            nesting[lastEntry.id].position -= 1;
+            console.log('decrement position -1');
+          }
         }
 
         setNesting(nesting);
       } else if (lastEntry && lastEntry.active === false) {
         console.log('lastEntry NOT active', lastEntry);
 
-        // const lastActive = findLastActive(nesting) as any;
-        // if (lastActive && lastActive.position) {
-        //   console.log('lastActive', lastActive, nesting);
-        //   lastActive.position -= 1;
-        // }
-
-        if (!hasActiveNesting(nesting)) {
+        const lastActiveNesting = findLastActive(nesting) as any;
+        if (lastActiveNesting && lastActiveNesting.position) {
+          console.log('lastActiveNesting position -1', lastActiveNesting);
+          lastActiveNesting.position -= 1;
+        } else {
+          console.log('decrementing current step');
           currentNumber -= 1;
           setCurrentStepNumber(currentNumber);
         }
@@ -534,6 +506,7 @@ const App: React.FC = () => {
     }
     setCurrentStep(previousStep);
     setHistory(history.slice(0, -1));
+    setCurrentQuestionNumber(currentQuestionNumber - 1);
   };
 
   return (
